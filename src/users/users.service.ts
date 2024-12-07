@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dtos/createUser.dto';
+import { UpdateUserDto } from './dtos/updateUser.dto'; 
 import { v4 as uuidv4 } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -26,7 +27,21 @@ export class UsersService {
   }
 
   findOne(id: string): Promise<User | null> {
-    return this.usersRepository.createQueryBuilder().where({ id }).getOne()
+    return this.usersRepository.createQueryBuilder().where({ id }).getOne();
+  }
+
+  async update(id: string, updateData: UpdateUserDto): Promise<User> {
+    
+    const user = await this.findOne(id); // Verifica se o usuário existe
+    if (!user) {
+      throw new Error('404 Not found');
+    }
+
+    
+    await this.usersRepository.update(id, updateData);// Atualiza os dados do usuário
+
+    
+    return this.findOne(id);// Retorna o usuário atualizado
   }
 
   async remove(id: string): Promise<void> {

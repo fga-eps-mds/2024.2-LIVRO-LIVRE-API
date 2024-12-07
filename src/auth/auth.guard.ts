@@ -7,10 +7,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtContants } from './auth.constants';
+import { LoginAttemptsService } from './login-attempts.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private loginAttemptsService: LoginAttemptsService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -26,6 +30,13 @@ export class AuthGuard implements CanActivate {
         }
       );
       request['user'] = payload;
+
+      // Verificar se o usuário está bloqueado
+      const isBlocked = await this.loginAttemptsService.isBlocked(payload.email);
+      if (isBlocked) {
+        throw new UnauthorizedException('Sua conta está temporariamente bloqueada.');
+      }
+
     } catch {
       throw new UnauthorizedException();
     }
